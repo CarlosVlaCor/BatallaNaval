@@ -9,9 +9,12 @@ import java.net.Socket;
 public class ParaRecibir implements Runnable{
       final DataInputStream entrada;
     private String nombre;
-ParaEnviar paraEnviar;
+    private ParaEnviar paraEnviar;
     public ParaRecibir(Socket socket) throws IOException {
         entrada = new DataInputStream(socket.getInputStream());
+    }
+    public void setParaEnviar(ParaEnviar paraEnviar){
+        this.paraEnviar = paraEnviar;
     }
 
     @Override
@@ -28,6 +31,10 @@ ParaEnviar paraEnviar;
                     desbloquear(mensaje);
                 }else if(mensaje.contains("DIRECTORIO")){
                     directorio(mensaje);
+                }else if(mensaje.contains("SOLICITUD")){
+                    recibirSolicitud(mensaje);
+                }else if(mensaje.contains("ACEPTADA-")){
+                    solicitudAceptada(mensaje);
                 }else{
                     filtroBloqueo(mensaje);
                 }
@@ -129,8 +136,16 @@ ParaEnviar paraEnviar;
             System.out.println("No se encontraron archivos");
         }
     }
-    public void setParaEnviar(ParaEnviar paraEnviar){
-        this.paraEnviar = paraEnviar;
+
+    private void recibirSolicitud(String mensaje) {
+        String[] mensajeDividido= mensaje.split("-");
+        String nombre = mensajeDividido[1];
+        System.out.println("Has recibido una solicitud de " + nombre);
+        ClienteH.solicitudes.add(nombre);
+    }
+    
+    private void solicitudAceptada(String mensaje){
+        paraEnviar.enviar(mensaje);
     }
 
     

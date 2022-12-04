@@ -1,25 +1,48 @@
 package servidorh;
 
+import batallaNaval.BatallaNaval;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-class UnCliente implements Runnable {
+public class UnCliente implements Runnable {
 
-     final DataInputStream entrada;
+    final DataInputStream entrada;
     final DataOutputStream salida;
     private String nombre;
-
+    private static Set<String> usuariosEnEntorno = new HashSet<>();
+    private boolean enEntorno = false;
+    private Map<String,String> tableros= new HashMap<>();
     public UnCliente(Socket s) throws IOException {
         entrada = new DataInputStream(s.getInputStream());
         salida = new DataOutputStream(s.getOutputStream());
 
     }
+    
+    public String getNombre(){
+        return nombre;
+    }
 
+    public DataInputStream getEntrada() {
+        return entrada;
+    }
 
+    public DataOutputStream getSalida() {
+        return salida;
+    }
+
+    public boolean isEnEntorno() {
+        return enEntorno;
+    }
+
+    
     @Override
     public void run() {
         String mensaje;
@@ -27,12 +50,18 @@ class UnCliente implements Runnable {
         while (true) {
             try {
                 mensaje = entrada.readUTF();
-                if (arrobado(mensaje)) {
+                if(esSolicitud(mensaje)){
+                    enviarSolicitud(mensaje);
+                }else if (arrobado(mensaje)) {
                     envioPersonal(mensaje);
                 } else if(esBloquear(mensaje)){
                     accionBloquear(mensaje);
                 } else if(esDesbloquear(mensaje)){
                     accionDesbloquear(mensaje);
+                } else if(mensaje.contains("SOLICITUDACEPTADA")){
+                    solicitudAceptada(mensaje);
+                }else if(mensaje.equals("BATALLA NAVAL")){
+                    iniciarEntorno();
                 }else {
                     envioGeneral(mensaje);
                 }
@@ -80,8 +109,9 @@ class UnCliente implements Runnable {
     }
 
     private void envioGeneral(String mensaje) throws IOException {
+        
         for (UnCliente cliente : ServidorH.lista.values()) {
-            if (!cliente.nombre.equals(nombre)) {
+            if (!cliente.nombre.equals(nombre) && cliente.isEnEntorno() == false) {
                 cliente.salida.writeUTF(this.nombre + ": " + mensaje);
             }
         }
@@ -121,6 +151,40 @@ class UnCliente implements Runnable {
                 salida.writeUTF("DESBLOQUEO NoExiste");
             }
         }
+    }
+
+    private boolean esSolicitud(String mensaje) {
+        return mensaje.contains("SOLICITUD");
+    }
+
+    private void enviarSolicitud(String mensaje) throws IOException {
+        if(arrobado(mensaje)){
+          String[] mensajesDividido = mensaje.split("@");
+          UnCliente unCliente = ServidorH.lista.get(mensajesDividido[1]);
+          if(unCliente!=null){
+              unCliente.salida.writeUTF("SOLICITUD " + nombre);
+              salida.writeUTF("Solicitud enviada");
+          }else{
+              salida.writeUTF("No existe ese usuario");
+          }
+        }else{
+            salida.writeUTF("Es necesario especificar el destinor");
+        }
+    }
+
+    private void solicitudAceptada(String mensaje) {
+        String[] mensajesDivididos = mensaje.split("-");
+        tableros.put(mensajesDivididos[1], nombre);
+        UnCliente unCliente = ServidorH.lista.get(mensajesDivididos[1]);
+        unCliente.tableros.put(nombre, mensajesDivididos[1]);
+        
+    }
+
+    private void iniciarEntorno() throws IOException {
+        enEntorno = true;
+        BatallaNaval batallaNaval = new BatallaNaval(this, ServidorH.lista);
+        batallaNaval.entornoDelJuego();
+        enEntorno = false;
     }
 
 

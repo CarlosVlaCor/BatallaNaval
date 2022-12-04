@@ -7,9 +7,10 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ServidorH {
-static HashMap<String,UnCliente> lista = new HashMap<String,UnCliente>();
+static Map<String,UnCliente> lista = new HashMap<String,UnCliente>();
     
     public static void main(String[] args) throws IOException {
         ServerSocket socketServidor = new ServerSocket(8080);
