@@ -7,10 +7,13 @@ package batallaNaval;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import servidorh.UnCliente;
 
 /**
@@ -24,6 +27,8 @@ public class BatallaNaval {
     private DataInputStream entrada;
     private DataOutputStream salida;
     private Set<String> solicitudesDeJuego = new HashSet<>();
+    private static List<Juego> tableros = new ArrayList<>();
+    private Juego juegoActual;
 
     public BatallaNaval(UnCliente unCliente, Map<String, UnCliente> lista) {
         this.unCliente = unCliente;
@@ -74,12 +79,12 @@ public class BatallaNaval {
         UnCliente clienteObtenido = lista.get(destino);
         if (clienteObtenido != null) {
             if (clienteObtenido.isEnEntorno() == true) {
-                System.out.println("Entró");
+                juegoActual = new Juego(unCliente, clienteObtenido, lista);
+                tableros.add(juegoActual);
                 clienteObtenido.getSalida().writeUTF("ACEPTADA-" + unCliente.getNombre());
-                Juego juego = new Juego(unCliente, lista);
-                juego.jugar();
+
+                jugar();
             } else {
-                unCliente.getSalida().writeUTF("No se encuentra disponible para jugar");
             }
         } else {
 
@@ -89,8 +94,24 @@ public class BatallaNaval {
 
     private void solicitudAceptada(String mensaje) throws IOException {
         String mensajesDivididos[] = mensaje.split("-");
-        Juego juego = new Juego(unCliente, lista);
-        juego.jugar();
 
+        List<Juego> juego = tableros.stream().filter((x)
+                -> x.getJugador1().getUnCliente().getNombre().equals(mensajesDivididos[1])
+                && x.getJugador2().getUnCliente().getNombre().equals(unCliente.getNombre()))
+                .collect(Collectors.toList());
+
+        juegoActual = juego.get(0);
+        jugar();
+    }
+
+    private void jugar() throws IOException {
+        while (!juegoActual.isPartidaTermindada()) {
+            if (juegoActual.isBarcosElegidos() == true) {
+                unCliente.getSalida().writeUTF("Amonos");
+                System.out.println(unCliente.getEntrada().readUTF());
+            } else {
+                juegoActual.colocarBarcos(unCliente.getNombre());
+            }
+        }
     }
 }
