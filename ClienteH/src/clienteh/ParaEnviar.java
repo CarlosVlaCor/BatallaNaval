@@ -27,7 +27,13 @@ public class ParaEnviar implements Runnable {
         while (true) {
             String mensaje = teclado.nextLine();
             try {
-                 salida.writeUTF(mensaje);   
+                if(mensaje.contains("SOLICITUDES")){
+                    mostrarSolicitudes();
+                }else if(mensaje.contains("ACEPTAR")){
+                    aceptarSolicitud(mensaje);
+                }else{
+                    salida.writeUTF(mensaje);
+                }   
             } catch (IOException ex) {
 
             }
@@ -46,9 +52,27 @@ public class ParaEnviar implements Runnable {
              Logger.getLogger(ParaEnviar.class.getName()).log(Level.SEVERE, null, ex);
          }
     }
+    
 
     public DataOutputStream getSalida() {
         return salida;
+    }
+
+    private void mostrarSolicitudes() {
+        System.out.println("Solicitudes: " + ClienteH.solicitudes);
+    }
+
+    private void aceptarSolicitud(String mensaje) throws IOException {
+        if(mensaje.contains("@")){
+            String[] mensajesDivididos = mensaje.split("@");
+            if(ClienteH.solicitudes.contains(mensajesDivididos[1])){
+                salida.writeUTF("SOLICITUDACEPTADA-"+ mensajesDivididos[1]);
+            }else{
+                System.out.println("No tienes ninguna solicitud de ese usuario");
+            }
+        }else{
+            
+        }
     }
 
     
