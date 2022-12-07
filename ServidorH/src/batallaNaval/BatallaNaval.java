@@ -48,6 +48,10 @@ public class BatallaNaval {
                 aceptarSolicitud(mensaje);
             } else if (mensaje.contains("ACEPTADA")) {
                 solicitudAceptada(mensaje);
+            }else if(mensaje.contains("ENTRAR")){
+                entrar(mensaje);
+            }else if(mensaje.equalsIgnoreCase("MOSTRAR TABLEROS")){
+                mostrarTableros();
             }
         }
         salida.writeUTF("Saliste de la Batalla Naval");
@@ -93,6 +97,19 @@ public class BatallaNaval {
         }
 
     }
+    private void mostrarTableros(){
+        List<Juego> comoJugador1 = tableros.stream()
+                .filter((x) -> x.getJugador1().getUnCliente()
+                        .getNombre().equals(unCliente.getNombre())).toList();
+        List<Juego> comoJugador2 = tableros.stream().filter((x) -> x.getJugador2().getUnCliente().getNombre()
+                                .equals(unCliente.getNombre())).toList();
+      if(!comoJugador1.isEmpty()){
+           comoJugador1.stream().forEach(x -> System.out.println(x.getJugador2().getUnCliente().getNombre()));
+      }else if(!comoJugador2.isEmpty()){
+          comoJugador2.stream().forEach(x -> System.out.println(x.getJugador1().getUnCliente().getNombre()));
+      }
+       
+    }
 
     private void solicitudAceptada(String mensaje) throws IOException {
         String mensajesDivididos[] = mensaje.split("-");
@@ -113,9 +130,36 @@ public class BatallaNaval {
                 juegoActual.jugar(unCliente.getNombre());
             } else {
                 System.out.println("A Jugar");
+                unCliente.setEstado("jugando");
                 juegoActual.colocarBarcos(unCliente.getNombre());
             }
+            if(unCliente.getEstado().equals("entorno")){
+                break;
+            }
         }
-        System.out.println("Amonos pa fuera");
+        unCliente.getSalida().writeUTF("Saliste de la partida");
+    }
+
+    private void entrar(String mensaje) throws IOException {
+        String[] mensajesDivididos = mensaje.split("@");
+        List<Juego> juego = tableros.stream().filter((x)
+                -> x.getJugador1().getUnCliente().getNombre().equals(mensajesDivididos[1])
+                && x.getJugador2().getUnCliente().getNombre().equals(unCliente.getNombre()))
+                .collect(Collectors.toList());
+        List<Juego>juego2 = tableros.stream().filter((x)
+                -> x.getJugador2().getUnCliente().getNombre().equals(mensajesDivididos[1])
+                && x.getJugador1().getUnCliente().getNombre().equals(unCliente.getNombre()))
+                .collect(Collectors.toList());
+        if(!juego.isEmpty()){
+            juegoActual = juego.get(0);
+            unCliente.setEstado("jugando");
+            jugar();
+        }else if(!juego2.isEmpty()){
+             juegoActual = juego2.get(0);
+             unCliente.setEstado("jugando");
+            jugar();
+        }
+        
+        
     }
 }

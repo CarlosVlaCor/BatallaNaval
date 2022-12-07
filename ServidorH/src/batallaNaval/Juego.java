@@ -69,6 +69,9 @@ public class Juego {
                 } else {
                     salir = esperar(jugador1);
                 }
+                if(jugador1.getUnCliente().getEstado().equals("entorno")){
+                    return;
+                }
             }
 
         } else {
@@ -80,6 +83,10 @@ public class Juego {
                 } else {
                     salir = esperar(jugador2);
                 }
+                if(jugador2.getUnCliente().getEstado().equals("entorno")){
+                    return;
+                }
+                
             }
         }
         if (partidaTermindada == true) {
@@ -108,13 +115,21 @@ public class Juego {
             atacante.getUnCliente().getSalida().writeUTF("Coloca la coordenada de ataque");
 
             String coordenada = atacante.getUnCliente().getEntrada().readUTF();
-            System.out.println(coordenada);
-            if (coordenadaCorrecta(coordenada, recibe.getTablero())) {
-                seguir = disparar(atacante, recibe, coordenada);
+            if (!coordenada.equals("SALIR")) {
+                System.out.println(coordenada);
+                if (coordenadaCorrecta(coordenada, recibe.getTablero())) {
+                    seguir = disparar(atacante, recibe, coordenada);
 
-            }
-            if (partidaTermindada == true) {
+                }
+
+                if (partidaTermindada == true) {
+                    seguir = true;
+                }
+            } else {
+                System.out.println("Pal entorno");
+                atacante.getUnCliente().setEstado("entorno");
                 seguir = true;
+                return seguir;
             }
         }
         jugadorEnturno = recibe.getUnCliente().getNombre();
@@ -148,7 +163,12 @@ public class Juego {
             tablero[valorLetra][valorNumero] = "X";
             atacante.getUnCliente().getSalida().writeUTF("Al agua padre");
             recibe.getUnCliente().getSalida().writeUTF("Al agua padre");
-            return comprobarGanador(atacante, recibe);
+            if(ultimaOportunidad == true){
+                return comprobarGanador(atacante, recibe);
+            }else{
+                return true;
+            }
+            
         }
     }
 
@@ -156,6 +176,10 @@ public class Juego {
         String m = "";
         while (!(m.equals("TUTURNO"))) {
             m = espera.getUnCliente().getEntrada().readUTF();
+            if(m.equals("SALIR")){
+                espera.getUnCliente().setEstado("entorno");
+                return true;
+            }
         }
         if (partidaTermindada == true) {
             return true;
@@ -275,18 +299,17 @@ public class Juego {
         return mostrar;
     }
 
-
     private boolean comprobarGanador(Jugador atacante, Jugador recibe) {
         boolean finalizar = true;
         for (Barco barco : recibe.getBarcos()) {
             if (!barco.getPosiciones().isEmpty()) {
                 finalizar = false;
-            }   
+            }
         }
         if (ultimaOportunidad == true) {
             if (finalizar == true) {
                 ganador = "Empate";
-            }else{
+            } else {
                 finalizar = true;
             }
             partidaTermindada = true;

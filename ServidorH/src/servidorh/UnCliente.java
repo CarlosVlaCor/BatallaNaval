@@ -188,7 +188,7 @@ public class UnCliente implements Runnable {
 
     private void iniciarEntorno() throws IOException {
         enEntorno = true;
-        estado = "En entorno";
+        estado = "entorno";
         BatallaNaval batallaNaval = new BatallaNaval(this, ServidorH.lista);
         batallaNaval.entornoDelJuego();
         enEntorno = false;
