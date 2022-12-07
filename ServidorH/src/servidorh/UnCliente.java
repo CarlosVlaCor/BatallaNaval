@@ -15,18 +15,20 @@ import java.util.logging.Logger;
 public class UnCliente implements Runnable {
 
     final DataInputStream entrada;
+    private String estado = "chat";
     final DataOutputStream salida;
     private String nombre;
     private static Set<String> usuariosEnEntorno = new HashSet<>();
     private boolean enEntorno = false;
-    private Map<String,String> tableros= new HashMap<>();
+    private Map<String, String> tableros = new HashMap<>();
+
     public UnCliente(Socket s) throws IOException {
         entrada = new DataInputStream(s.getInputStream());
         salida = new DataOutputStream(s.getOutputStream());
 
     }
-    
-    public String getNombre(){
+
+    public String getNombre() {
         return nombre;
     }
 
@@ -41,8 +43,13 @@ public class UnCliente implements Runnable {
     public boolean isEnEntorno() {
         return enEntorno;
     }
+    public void setEstado(String estado){
+        this.estado = estado;
+    }
+    public String getEstado(){
+        return estado;
+    }
 
-    
     @Override
     public void run() {
         String mensaje;
@@ -50,19 +57,19 @@ public class UnCliente implements Runnable {
         while (true) {
             try {
                 mensaje = entrada.readUTF();
-                if(esSolicitud(mensaje)){
+                if (esSolicitud(mensaje)) {
                     enviarSolicitud(mensaje);
-                }else if (arrobado(mensaje)) {
+                } else if (arrobado(mensaje)) {
                     envioPersonal(mensaje);
-                } else if(esBloquear(mensaje)){
+                } else if (esBloquear(mensaje)) {
                     accionBloquear(mensaje);
-                } else if(esDesbloquear(mensaje)){
+                } else if (esDesbloquear(mensaje)) {
                     accionDesbloquear(mensaje);
-                } else if(mensaje.contains("SOLICITUDACEPTADA")){
+                } else if (mensaje.contains("SOLICITUDACEPTADA")) {
                     solicitudAceptada(mensaje);
-                }else if(mensaje.equals("BATALLA NAVAL")){
+                } else if (mensaje.equals("BATALLA NAVAL")) {
                     iniciarEntorno();
-                }else {
+                } else {
                     envioGeneral(mensaje);
                 }
             } catch (IOException ex) {
@@ -70,19 +77,18 @@ public class UnCliente implements Runnable {
             }
         }
     }
-    
-    private void recibirNombre(){
+
+    private void recibirNombre() {
         try {
             String nombreRecibido = entrada.readUTF();
             UnCliente unCliente = ServidorH.lista.get(nombreRecibido);
-            if(unCliente == null){
+            if (unCliente == null) {
                 nombre = nombreRecibido;
-               ServidorH.lista.put(nombre, this);
-            }else{
-               salida.writeUTF("--nombre igual--");
+                ServidorH.lista.put(nombre, this);
+            } else {
+                salida.writeUTF("--nombre igual--");
             }
-            
-            
+
         } catch (IOException ex) {
             Logger.getLogger(UnCliente.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -109,7 +115,7 @@ public class UnCliente implements Runnable {
     }
 
     private void envioGeneral(String mensaje) throws IOException {
-        
+
         for (UnCliente cliente : ServidorH.lista.values()) {
             if (!cliente.nombre.equals(nombre) && cliente.isEnEntorno() == false) {
                 cliente.salida.writeUTF(this.nombre + ": " + mensaje);
@@ -123,13 +129,13 @@ public class UnCliente implements Runnable {
 
     private void accionBloquear(String mensaje) throws IOException {
         String nombreABloquear[] = mensaje.split(" ");
-        if(nombreABloquear[1].equalsIgnoreCase(nombre)){
+        if (nombreABloquear[1].equalsIgnoreCase(nombre)) {
             salida.writeUTF("BLOQUEAR MismoUsuario");
-        }else{
+        } else {
             UnCliente unCliente = ServidorH.lista.get(nombreABloquear[1]);
-            if(unCliente != null){
+            if (unCliente != null) {
                 salida.writeUTF(mensaje);
-            }else{
+            } else {
                 salida.writeUTF("BLOQUEAR NoExiste");
             }
         }
@@ -141,13 +147,13 @@ public class UnCliente implements Runnable {
 
     private void accionDesbloquear(String mensaje) throws IOException {
         String nombreABloquear[] = mensaje.split(" ");
-        if(nombreABloquear[1].equalsIgnoreCase(nombre)){
+        if (nombreABloquear[1].equalsIgnoreCase(nombre)) {
             salida.writeUTF("DESBLOQUEO MismoUsuario");
-        }else{
+        } else {
             UnCliente unCliente = ServidorH.lista.get(nombreABloquear[1]);
-            if(unCliente != null){
+            if (unCliente != null) {
                 salida.writeUTF(mensaje);
-            }else{
+            } else {
                 salida.writeUTF("DESBLOQUEO NoExiste");
             }
         }
@@ -158,16 +164,16 @@ public class UnCliente implements Runnable {
     }
 
     private void enviarSolicitud(String mensaje) throws IOException {
-        if(arrobado(mensaje)){
-          String[] mensajesDividido = mensaje.split("@");
-          UnCliente unCliente = ServidorH.lista.get(mensajesDividido[1]);
-          if(unCliente!=null){
-              unCliente.salida.writeUTF("SOLICITUD " + nombre);
-              salida.writeUTF("Solicitud enviada");
-          }else{
-              salida.writeUTF("No existe ese usuario");
-          }
-        }else{
+        if (arrobado(mensaje)) {
+            String[] mensajesDividido = mensaje.split("@");
+            UnCliente unCliente = ServidorH.lista.get(mensajesDividido[1]);
+            if (unCliente != null) {
+                unCliente.salida.writeUTF("SOLICITUD " + nombre);
+                salida.writeUTF("Solicitud enviada");
+            } else {
+                salida.writeUTF("No existe ese usuario");
+            }
+        } else {
             salida.writeUTF("Es necesario especificar el destinor");
         }
     }
@@ -177,15 +183,15 @@ public class UnCliente implements Runnable {
         tableros.put(mensajesDivididos[1], nombre);
         UnCliente unCliente = ServidorH.lista.get(mensajesDivididos[1]);
         unCliente.tableros.put(nombre, mensajesDivididos[1]);
-        
+
     }
 
     private void iniciarEntorno() throws IOException {
         enEntorno = true;
+        estado = "En entorno";
         BatallaNaval batallaNaval = new BatallaNaval(this, ServidorH.lista);
         batallaNaval.entornoDelJuego();
         enEntorno = false;
     }
-
 
 }

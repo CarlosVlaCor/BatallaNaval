@@ -50,6 +50,8 @@ public class BatallaNaval {
                 solicitudAceptada(mensaje);
             }
         }
+        salida.writeUTF("Saliste de la Batalla Naval");
+        unCliente.setEstado("chat");
     }
 
     private void enviarSolicitud(String mensaje) throws IOException {
@@ -105,13 +107,15 @@ public class BatallaNaval {
     }
 
     private void jugar() throws IOException {
-        while (!juegoActual.isPartidaTermindada()) {
+        while (juegoActual.isPartidaTermindada() == false) {
+            
             if (juegoActual.isBarcosElegidos() == true) {
-                unCliente.getSalida().writeUTF("Amonos");
-                System.out.println(unCliente.getEntrada().readUTF());
+                juegoActual.jugar(unCliente.getNombre());
             } else {
+                System.out.println("A Jugar");
                 juegoActual.colocarBarcos(unCliente.getNombre());
             }
         }
+        System.out.println("Amonos pa fuera");
     }
 }

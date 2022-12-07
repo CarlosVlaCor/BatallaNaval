@@ -35,6 +35,10 @@ public class ParaRecibir implements Runnable{
                     recibirSolicitud(mensaje);
                 }else if(mensaje.contains("ACEPTADA-")){
                     solicitudAceptada(mensaje);
+                }else if(mensaje.contains("TUTURNO")){
+                   paraEnviar.enviar(mensaje);
+                }else if(mensaje.equals("-BARCOELEGIDO")){
+                   paraEnviar.enviar(mensaje);
                 }else{
                     filtroBloqueo(mensaje);
                 }
