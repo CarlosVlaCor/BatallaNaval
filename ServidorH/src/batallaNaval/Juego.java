@@ -34,11 +34,13 @@ public class Juego {
     private boolean empate;
     private String ganador;
     private boolean ultimaOportunidad = false;
+    Map<String, Integer> tablaDePuntuaciones;
 
-    public Juego(UnCliente jugador1, UnCliente jugador2, Map<String, UnCliente> lista) {
+    public Juego(UnCliente jugador1, UnCliente jugador2, Map<String, UnCliente> lista, Map<String, Integer> tablaDePuntuaciones) {
         this.jugador1 = new Jugador(jugador1);
         this.jugador2 = new Jugador(jugador2);
         this.lista = lista;
+        this.tablaDePuntuaciones = tablaDePuntuaciones;
         iniciada = false;
     }
 
@@ -61,7 +63,6 @@ public class Juego {
     public void jugar(String nombre) throws IOException {
 
         if (nombre.equals(jugador1.getUnCliente().getNombre())) {
-            System.out.println("A");
             boolean salir = false;
             while (salir != true || partidaTermindada != true) {
                 if (jugadorEnturno.equals(nombre)) {
@@ -69,13 +70,12 @@ public class Juego {
                 } else {
                     salir = esperar(jugador1);
                 }
-                if(jugador1.getUnCliente().getEstado().equals("entorno")){
+                if (jugador1.getUnCliente().getEstado().equals("entorno")) {
                     return;
                 }
             }
 
         } else {
-            System.out.println("B");
             boolean salir = false;
             while (salir != true || partidaTermindada != true) {
                 if (jugadorEnturno.equals(nombre)) {
@@ -83,14 +83,71 @@ public class Juego {
                 } else {
                     salir = esperar(jugador2);
                 }
-                if(jugador2.getUnCliente().getEstado().equals("entorno")){
+                if (jugador2.getUnCliente().getEstado().equals("entorno")) {
                     return;
                 }
-                
+
             }
         }
         if (partidaTermindada == true) {
-            System.out.println("Ganador: " + ganador);
+            if (jugador1.getUnCliente().getNombre().equals(ganador)) {
+                if (nombre.equals(jugador1.getUnCliente().getNombre())) {
+                    Integer puntos = tablaDePuntuaciones.get(jugador1.getUnCliente().getNombre());
+                    if (puntos != null) {
+                        puntos += 3;
+                        tablaDePuntuaciones.put(jugador1.getUnCliente().getNombre(), puntos);
+                    } else {
+                        tablaDePuntuaciones.put(jugador1.getUnCliente().getNombre(), 3);
+                    }
+                    Integer ganadas = jugador1.getUnCliente().getGanados().get(jugador2.getUnCliente().getNombre());
+                    if (ganadas != null) {
+                        ganadas += 1;
+                        jugador1.getUnCliente().getGanados().put(jugador2.getUnCliente().getNombre(), ganadas);
+                    } else {
+                        jugador1.getUnCliente().getGanados().put(jugador2.getUnCliente().getNombre(), 1);
+                    }
+                    Integer perdidas =jugador2.getUnCliente().getPerdidos().get(jugador1.getUnCliente().getNombre());
+                    if (perdidas != null) {
+                        perdidas += 1;
+                        jugador2.getUnCliente().getPerdidos().put(jugador1.getUnCliente().getNombre(), perdidas);
+                    } else {
+                       jugador2.getUnCliente().getPerdidos().put(jugador1.getUnCliente().getNombre(), 1);
+                    }
+                    jugador1.getUnCliente().getSalida().writeUTF("Has ganado");
+                    jugador2.getUnCliente().getSalida().writeUTF("Has perdido");
+                }
+
+            } else if (jugador2.getUnCliente().getNombre().equals(ganador)) {
+                if (nombre.equals(jugador2.getUnCliente().getNombre())) {
+                    Integer puntos = tablaDePuntuaciones.get(jugador1.getUnCliente().getNombre());
+                    if (puntos != null) {
+                        puntos += 3;
+                        tablaDePuntuaciones.put(jugador2.getUnCliente().getNombre(), puntos);
+                    } else {
+                        tablaDePuntuaciones.put(jugador2.getUnCliente().getNombre(), 3);
+                    }
+                    Integer ganadas = jugador2.getUnCliente().getGanados().get(jugador1.getUnCliente().getNombre());
+                    if (ganadas != null) {
+                        ganadas += 1;
+                        jugador2.getUnCliente().getGanados().put(jugador1.getUnCliente().getNombre(), ganadas);
+                    } else {
+                        jugador2.getUnCliente().getGanados().put(jugador1.getUnCliente().getNombre(), 1);
+                    }
+                    Integer perdidas = jugador1.getUnCliente().getPerdidos().get(jugador2.getUnCliente().getNombre());
+                    if (perdidas != null) {
+                        perdidas += 1;
+                        jugador1.getUnCliente().getPerdidos().put(jugador2.getUnCliente().getNombre(), perdidas);
+                    } else {
+                        jugador1.getUnCliente().getPerdidos().put(jugador2.getUnCliente().getNombre(), 1);
+                    }
+                    jugador2.getUnCliente().getSalida().writeUTF("Has ganado");
+                    jugador1.getUnCliente().getSalida().writeUTF("Has perdido");
+                }
+
+            } else {
+
+            }
+
         }
 
     }
@@ -113,7 +170,7 @@ public class Juego {
         boolean seguir = false;
         while (seguir != true) {
             atacante.getUnCliente().getSalida().writeUTF("Coloca la coordenada de ataque");
-
+            atacante.getUnCliente().getSalida().writeUTF(mostrarTableroAtacante(atacante, recibe));
             String coordenada = atacante.getUnCliente().getEntrada().readUTF();
             if (!coordenada.equals("SALIR")) {
                 System.out.println(coordenada);
@@ -146,7 +203,6 @@ public class Juego {
         if (tablero[valorLetra][valorNumero].equals("*")) {
             for (Barco barco : recibe.getBarcos()) {
                 if (barco.getPosiciones().contains(coordenada + " ")) {
-                    System.out.println("AAAAAAA");
                     barco.getPosiciones().remove(coordenada + " ");
                     break;
                 }
@@ -154,21 +210,21 @@ public class Juego {
             }
 
             tablero[valorLetra][valorNumero] = "O";
-            atacante.getUnCliente().getSalida().writeUTF(mostrarTableroAtacante(atacante, recibe));
-            atacante.getUnCliente().getSalida().writeUTF("A Jijuesushingadamadre le diste");
-            recibe.getUnCliente().getSalida().writeUTF("A jijuesushingadamadre me diste");
+
+            atacante.getUnCliente().getSalida().writeUTF("Le diste");
+            recibe.getUnCliente().getSalida().writeUTF("Te han dado");
             return comprobarGanador(atacante, recibe);
 
         } else {
             tablero[valorLetra][valorNumero] = "X";
             atacante.getUnCliente().getSalida().writeUTF("Al agua padre");
             recibe.getUnCliente().getSalida().writeUTF("Al agua padre");
-            if(ultimaOportunidad == true){
+            if (ultimaOportunidad == true) {
                 return comprobarGanador(atacante, recibe);
-            }else{
+            } else {
                 return true;
             }
-            
+
         }
     }
 
@@ -176,7 +232,7 @@ public class Juego {
         String m = "";
         while (!(m.equals("TUTURNO"))) {
             m = espera.getUnCliente().getEntrada().readUTF();
-            if(m.equals("SALIR")){
+            if (m.equals("SALIR")) {
                 espera.getUnCliente().setEstado("entorno");
                 return true;
             }

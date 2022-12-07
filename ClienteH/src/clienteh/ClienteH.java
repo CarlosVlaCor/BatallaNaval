@@ -7,19 +7,39 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ClienteH {
 
     static List<String> bloqueados = new ArrayList<>();
     static Set<String> solicitudes = new HashSet<>();
-    public static void main(String[] args) throws IOException {
-        Socket socket = new Socket("localhost", 8080);
+    public static void main(String[] args)  {
+        Socket socket= null;
+        try {
+            socket = new Socket("localhost", 8080);
+        } catch (IOException ex) {
+            System.out.println("Error en la conexion");
+            System.exit(1);
+        }
         
-        ParaRecibir paraRecibir = new ParaRecibir(socket);
+        ParaRecibir paraRecibir = null;
+        try {
+            paraRecibir = new ParaRecibir(socket);
+        } catch (IOException ex) {
+            System.out.println("Error en la conexion");
+            System.exit(1);
+        }
         Thread hiloRecibir = new Thread(paraRecibir);
         hiloRecibir.start();
         
-        ParaEnviar paraEnviar = new ParaEnviar(socket);
+        ParaEnviar paraEnviar = null;
+        try {
+            paraEnviar = new ParaEnviar(socket);
+        } catch (IOException ex) {
+            System.out.println("Error en la conexion");
+            System.exit(1);
+        }
         Thread hiloEnviar = new Thread(paraEnviar);
         paraRecibir.setParaEnviar(paraEnviar);
         hiloEnviar.start();

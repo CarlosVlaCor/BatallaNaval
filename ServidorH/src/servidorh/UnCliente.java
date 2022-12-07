@@ -21,11 +21,28 @@ public class UnCliente implements Runnable {
     private static Set<String> usuariosEnEntorno = new HashSet<>();
     private boolean enEntorno = false;
     private Map<String, String> tableros = new HashMap<>();
-
+    private Map<String,Integer> ganados = new HashMap<>();
+    private Map<String,Integer> perdidos = new HashMap<>();
     public UnCliente(Socket s) throws IOException {
         entrada = new DataInputStream(s.getInputStream());
         salida = new DataOutputStream(s.getOutputStream());
 
+    }
+
+    public Map<String, Integer> getGanados() {
+        return ganados;
+    }
+
+    public void setGanados(Map<String, Integer> ganados) {
+        this.ganados = ganados;
+    }
+
+    public Map<String, Integer> getPerdidos() {
+        return perdidos;
+    }
+
+    public void setPerdidos(Map<String, Integer> perdidos) {
+        this.perdidos = perdidos;
     }
 
     public String getNombre() {
@@ -57,23 +74,20 @@ public class UnCliente implements Runnable {
         while (true) {
             try {
                 mensaje = entrada.readUTF();
-                if (esSolicitud(mensaje)) {
-                    enviarSolicitud(mensaje);
-                } else if (arrobado(mensaje)) {
+                if (arrobado(mensaje)) {
                     envioPersonal(mensaje);
                 } else if (esBloquear(mensaje)) {
                     accionBloquear(mensaje);
                 } else if (esDesbloquear(mensaje)) {
                     accionDesbloquear(mensaje);
-                } else if (mensaje.contains("SOLICITUDACEPTADA")) {
-                    solicitudAceptada(mensaje);
-                } else if (mensaje.equals("BATALLA NAVAL")) {
+                }else if (mensaje.equals("BATALLA NAVAL")) {
                     iniciarEntorno();
                 } else {
                     envioGeneral(mensaje);
                 }
             } catch (IOException ex) {
-
+                System.out.println("Error de conexion");
+                System.exit(1);
             }
         }
     }
@@ -90,7 +104,8 @@ public class UnCliente implements Runnable {
             }
 
         } catch (IOException ex) {
-            Logger.getLogger(UnCliente.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("Error de conexion");
+            System.exit(1);
         }
     }
 
@@ -163,28 +178,7 @@ public class UnCliente implements Runnable {
         return mensaje.contains("SOLICITUD");
     }
 
-    private void enviarSolicitud(String mensaje) throws IOException {
-        if (arrobado(mensaje)) {
-            String[] mensajesDividido = mensaje.split("@");
-            UnCliente unCliente = ServidorH.lista.get(mensajesDividido[1]);
-            if (unCliente != null) {
-                unCliente.salida.writeUTF("SOLICITUD " + nombre);
-                salida.writeUTF("Solicitud enviada");
-            } else {
-                salida.writeUTF("No existe ese usuario");
-            }
-        } else {
-            salida.writeUTF("Es necesario especificar el destinor");
-        }
-    }
 
-    private void solicitudAceptada(String mensaje) {
-        String[] mensajesDivididos = mensaje.split("-");
-        tableros.put(mensajesDivididos[1], nombre);
-        UnCliente unCliente = ServidorH.lista.get(mensajesDivididos[1]);
-        unCliente.tableros.put(nombre, mensajesDivididos[1]);
-
-    }
 
     private void iniciarEntorno() throws IOException {
         enEntorno = true;

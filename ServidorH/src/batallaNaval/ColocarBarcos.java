@@ -26,6 +26,10 @@ public class ColocarBarcos {
     }
     private boolean verificarCoordenadas(String coordenadas, Barco barco, String tablero[][]) {
         boolean colocado = false;
+        if(!coordenadas.contains(",")){
+            
+            return false;
+        }
         String[] coordenadasDivididas = coordenadas.split(",");
         String letra1 = coordenadasDivididas[0].substring(0, 1);
         String numero1 = coordenadasDivididas[0].substring(1, coordenadasDivididas[0].length());
@@ -74,6 +78,7 @@ public class ColocarBarcos {
                 }
             }
         } catch (NumberFormatException ex) {
+            System.out.println("Formato de coordenadas incorrecto");
             colocado = false;
         }
         return colocado;
